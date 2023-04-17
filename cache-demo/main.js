@@ -29,6 +29,10 @@ const setupApi = (app, redisClient) => {
     if (await redisClient.exists(key)) {
       // cache hit
       const cachedData = await redisClient.get(key);
+
+      // set ttl header
+      res.set('Redis-TTL', await redisClient.ttl(key));
+
       res.send(JSON.parse(cachedData));
     } else {
       // cache miss, override res.send method
@@ -36,6 +40,9 @@ const setupApi = (app, redisClient) => {
       res.send = (data) => {
         // set the response cache content, using the proper Time To Live
         redisClient.set(key, JSON.stringify(data), { EX: TTL_S });
+
+        // set ttl header
+        res.set('Redis-TTL', TTL_S);
 
         // restore method override
         res.send = originalSend;
