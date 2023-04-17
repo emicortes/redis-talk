@@ -4,8 +4,8 @@ const http = require("http");
 const socketio = require("socket.io");
 const redis = require("redis");
 
+// redis client setup
 const setupRedis = async () => {
-  // Creating a Redis client and subscribing to the chat topic
   const redisClient = redis.createClient(process.env.REDIS_URL || "localhost");
 
   await redisClient.connect();
@@ -13,21 +13,31 @@ const setupRedis = async () => {
   return redisClient;
 };
 
+// api setup
 const TTL_S = 10;
 const PROCESSING_TIME_MS = 2000;
-
 const setupApi = (app, redisClient) => {
+  //cache key builder
   const getCacheKey = (req) => `cache:${req.path}`;
 
+  // middleware
   const cacheMiddleware = async (req, res, next) => {
+    //build cache key
     const key = getCacheKey(req);
+
+    //find response in redis
     if (await redisClient.exists(key)) {
+      // cache hit
       const cachedData = await redisClient.get(key);
       res.send(JSON.parse(cachedData));
     } else {
+      // cache miss, override res.send method
       const originalSend = res.send;
       res.send = (data) => {
-        redisClient.set(key, JSON.stringify(data), { EX: TTL_S }); // Set TTL to 1 hour (3600 seconds)
+        // set the response cache content, using the proper Time To Live
+        redisClient.set(key, JSON.stringify(data), { EX: TTL_S });
+
+        // restore method override
         res.send = originalSend;
         res.send(data);
       };
@@ -35,9 +45,12 @@ const setupApi = (app, redisClient) => {
     }
   };
 
+  // test endpoint
   app.get("/test", cacheMiddleware, (req, res) => {
+    // emulate long-running response with a timeout
     setTimeout(
-      () => res.send({ value: Math.random(), comment: "I'm an expensive result" }),
+      () =>
+        res.send({ value: Math.random(), comment: "I'm an expensive result" }),
       PROCESSING_TIME_MS
     );
   });
@@ -52,14 +65,17 @@ const init = async () => {
 
   // Creating the Socket.io server and passing in the HTTP server
   const io = socketio(server);
+
+  // setup redis client
   const redisClient = await setupRedis(io);
 
+  // setup api
   setupApi(app, redisClient);
 
   // Starting the server
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 };
 

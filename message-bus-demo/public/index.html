@@ -16,7 +16,7 @@
       // Connecting to the Socket.io server
       const socket = io();
 
-      // Displaying a welcome message
+      // received messages
       socket.on('message', (message) => {
         const messagesDiv = document.getElementById('messages');
         const messageElement = document.createElement('div');

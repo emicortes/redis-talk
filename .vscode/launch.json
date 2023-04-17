@@ -1,0 +1,50 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Message bus node 1",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "PORT": "3501"
+            },  
+            "program": "${workspaceFolder}/message-bus-demo/main.js",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Message bus node 2",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "PORT": "3502"
+            },  
+            "program": "${workspaceFolder}/message-bus-demo/main.js",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Cache",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "PORT": "3503"
+            },  
+            "program": "${workspaceFolder}/cache-demo/main.js",
+        },
+    ],
+    "compounds": [
+        {
+            "name": "Demos",
+            "configurations": ["Message bus node 1", "Message bus node 2", "Cache"]
+        }
+    ]
+}
